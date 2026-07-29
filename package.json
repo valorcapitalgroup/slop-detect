@@ -1,6 +1,6 @@
 {
   "name": "@afnspacific/slop-detect",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI telemetry detect",
   "main": "index.js",
   "bin": {
