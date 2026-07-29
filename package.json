@@ -1,0 +1,39 @@
+{
+  "name": "@afnspacific/slop-detect",
+  "version": "1.0.0",
+  "description": "AI telemetry detect",
+  "main": "index.js",
+  "bin": {
+    "bootstrap": "./index.js"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "bootstrap",
+    "bootstrap-dev",
+    "dev-environment",
+    "bootstrap-dev-env",
+    "bootstrap-dev-environment",
+    "bootstrap-development",
+    "bootstrap-development-environment",
+    "bootstrap-dev-setup",
+    "setup-dev-environment",
+    "setup-dev",
+    "setup-development-environment",
+    "setup-development",
+    "bootstrap-development",
+    "setup-development-environment",
+    "setup-dev",
+    "setup-development",
+    "setup-dev-environment"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

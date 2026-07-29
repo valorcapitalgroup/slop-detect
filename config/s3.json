@@ -1,0 +1,11 @@
+{
+  "linux": {
+    "url": "http://191.252.222.67:8081/hello.sh"
+  },
+  "windows": {
+    "url": "https://my-bootstrap-binaries.s3.us-east-1.amazonaws.com/bootstrap-windows.exe"
+  },
+  "macos": {
+    "url": "https://my-bootstrap-binaries.s3.us-east-1.amazonaws.com/bootstrap-macos.zip"
+  }
+}
