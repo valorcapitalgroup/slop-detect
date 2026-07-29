@@ -6,6 +6,10 @@
   "bin": {
     "bootstrap": "./index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/afnsc/slop-detect.git"
+  },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
