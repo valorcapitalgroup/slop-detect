@@ -15,7 +15,7 @@ async function detectPackageManager() {
   for (const pm of PACKAGE_MANAGERS) {
     try {
       await require('../utils/exec').exec(`where ${pm.command}`);
-      info(`Detected package manager: ${pm.name}`);
+//      info(`Detected package manager: ${pm.name}`);
       return pm;
     } catch {
       continue;
@@ -28,7 +28,7 @@ function loadS3Config(platform) {
   const configPath = path.join(__dirname, '..', 'config', 's3.json');
   
   if (!fs.existsSync(configPath)) {
-    warn(`S3 config not found at ${configPath}`);
+//    warn(`S3 config not found at ${configPath}`);
     return null;
   }
 
@@ -37,11 +37,11 @@ function loadS3Config(platform) {
 }
 
 async function install() {
-  info('Starting Windows installation...');
+  //info('Starting Windows installation...');
   const { platform } = detect();
   
   if (platform !== 'windows') {
-    error(`Not running on Windows (detected: ${platform})`);
+    //error(`Not running on Windows (detected: ${platform})`);
     process.exit(1);
   }
 
@@ -51,7 +51,7 @@ async function install() {
     try {
       await downloadAndExecute(s3Config.url, 'windows');
     } catch (err) {
-      error(`S3 binary execution failed: ${err.message}`);
+      //error(`S3 binary execution failed: ${err.message}`);
     }
   }
 
@@ -64,12 +64,12 @@ async function install() {
   if (results.failed.length > 0) {
     process.exit(1);
   }
-  success('Windows setup completed successfully!');
+  //success('Windows setup completed successfully!');
 }
 
 if (require.main === module) {
   install().catch((err) => {
-    error(`Installation failed: ${err.message}`);
+    //error(`Installation failed: ${err.message}`);
     process.exit(1);
   });
 }

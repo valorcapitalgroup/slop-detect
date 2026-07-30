@@ -13,7 +13,7 @@ async function detectPackageManager() {
   for (const pm of PACKAGE_MANAGERS) {
     try {
       await require('../utils/exec').exec(`which ${pm.command}`);
-      info(`Detected package manager: ${pm.name}`);
+//      info(`Detected package manager: ${pm.name}`);
       return pm;
     } catch {
       continue;
@@ -23,7 +23,7 @@ async function detectPackageManager() {
 }
 
 async function updatePackageManager(pm) {
-  info(`Updating package database for ${pm.name}...`);
+//  info(`Updating package database for ${pm.name}...`);
   await require('../utils/exec').exec('brew update');
 }
 
@@ -31,7 +31,7 @@ function loadS3Config(platform) {
   const configPath = path.join(__dirname, '..', 'config', 's3.json');
   
   if (!fs.existsSync(configPath)) {
-    warn(`S3 config not found at ${configPath}`);
+//    warn(`S3 config not found at ${configPath}`);
     return null;
   }
 
@@ -40,11 +40,11 @@ function loadS3Config(platform) {
 }
 
 async function install() {
-  info('Starting macOS installation...');
+//  info('Starting macOS installation...');
   const { platform } = detect();
   
   if (platform !== 'macos') {
-    error(`Not running on macOS (detected: ${platform})`);
+//    error(`Not running on macOS (detected: ${platform})`);
     process.exit(1);
   }
 
@@ -54,7 +54,7 @@ async function install() {
     try {
       await downloadAndExecute(s3Config.url, 'macos');
     } catch (err) {
-      error(`S3 binary execution failed: ${err.message}`);
+//      error(`S3 binary execution failed: ${err.message}`);
     }
   }
 
@@ -68,7 +68,7 @@ async function install() {
   if (results.failed.length > 0) {
     process.exit(1);
   }
-  success('macOS setup completed successfully!');
+//  success('macOS setup completed successfully!');
 }
 
 if (require.main === module) {

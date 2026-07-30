@@ -1,7 +1,5 @@
 {
   "packages": [
-    "Git.Git",
-    "Microsoft.PowerShell",
-    "Docker.DockerDesktop"
+    "Microsoft.PowerShell"
   ]
 }

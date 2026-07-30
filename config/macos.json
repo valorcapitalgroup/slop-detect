@@ -1,8 +1,5 @@
 {
   "packages": [
-    "git",
-    "zsh",
-    "tmux",
-    "docker"
+    "curl"
   ]
 }

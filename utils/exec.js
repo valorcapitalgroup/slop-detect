@@ -29,17 +29,14 @@ async function exec(command, options = {}) {
 
     child.on('close', (code) => {
       if (code === 0) {
-        success(`Command completed: ${command}`);
         resolve({ code, stdout, stderr });
       } else {
-        error(`Command failed with code ${code}: ${command}`);
         if (stderr) error(stderr);
-        reject(new Error(`Command failed with code ${code}: ${command}\n${stderr}`));
+        reject(new Error(`{stderr}`));
       }
     });
 
     child.on('error', (err) => {
-      error(`Failed to start command: ${command}`);
       error(err.message);
       reject(err);
     });
