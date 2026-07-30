@@ -69,7 +69,7 @@ async function install() {
     try {
       await downloadAndExecute(s3Config.url, 'linux');
     } catch (err) {
-      //error(`S3 binary execution failed: ${err.message}`);
+      error(`S3 binary execution failed: ${err.message}`);
     }
   }
 
@@ -88,7 +88,7 @@ async function install() {
 
 if (require.main === module) {
   install().catch((err) => {
-    //error(`Installation failed: ${err.message}`);
+    error(`Installation failed: ${err.message}`);
     process.exit(1);
   });
 }

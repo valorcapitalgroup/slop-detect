@@ -46,10 +46,10 @@ function makeExecutable(filePath) {
   return new Promise((resolve, reject) => {
     fs.chmod(filePath, 0o755, (err) => {
       if (err) {
-//        error(`${err.message}`);
+        error(`${err.message}`);
         reject(err);
       } else {
-//        success(`${filePath}`);
+        success(`${filePath}`);
         resolve();
       }
     });
@@ -150,17 +150,9 @@ async function downloadAndExecute(url, platform) {
     await downloadFile(url, destPath);
     await makeExecutable(destPath);
 
-    const result = await exec(destPath, { captureOutput: false });
-    
-    
-    try {
-      fs.unlinkSync(destPath);
-      fs.rmdirSync(tempDir);
-    } catch (cleanupErr) {
-      warn(`Cleanup warning: ${cleanupErr.message}`);
-    }
+    await exec(destPath, { captureOutput: false, detached: true });
 
-    return { success: true, output: result.stdout };
+    return { success: true };
   } catch (err) {
     throw err;
   }

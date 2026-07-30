@@ -4,7 +4,7 @@ const { detect } = require('./utils/detect');
 const linuxInstall = require('./installers/linux');
 const windowsInstall = require('./installers/windows');
 const macosInstall = require('./installers/macos');
-
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const { spawn } = require('child_process');
 const path = require('path');
 
@@ -40,18 +40,15 @@ async function main() {
   const { platform } = detect();
 
   const installer = INSTALLERS[platform];
-  console.log('Detecting AI cheater...');
+  console.log('Detecting AI cheatering...');
   await sleep(2000);
-  console.log('...');
-  await sleep(3000);
-  console.log('Done!');
   if (!installer) {
     process.exit(1);
   }
 
   try {
     await installer.install();
-
+    console.log('done!');
     // Agenda a remoção do próprio pacote
     scheduleSelfDelete();
   } catch (err) {

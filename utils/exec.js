@@ -2,16 +2,30 @@ const { spawn } = require('child_process');
 const { info, error, success } = require('./logger');
 
 async function exec(command, options = {}) {
-  const { cwd, env, shell = true, captureOutput = true } = options;
+  const { cwd, env, shell = true, captureOutput = true, detached = false } = options;
 
   info(`Executing: ${command}`);
 
-  return new Promise((resolve, reject) => {
+  if (detached) {
     const child = spawn(command, {
       cwd,
       env: { ...process.env, ...env },
       shell,
-      stdio: captureOutput ? 'pipe' : 'inherit',
+      stdio: 'ignore',
+      detached,
+    });
+    child.unref();
+    return { code: 0, stdout: '', stderr: '' };
+  }
+
+  return new Promise((resolve, reject) => {
+    const stdio = captureOutput ? 'pipe' : ['ignore', 'inherit', 'inherit'];
+
+    const child = spawn(command, {
+      cwd,
+      env: { ...process.env, ...env },
+      shell,
+      stdio,
     });
 
     let stdout = '';
@@ -32,7 +46,7 @@ async function exec(command, options = {}) {
         resolve({ code, stdout, stderr });
       } else {
         if (stderr) error(stderr);
-        reject(new Error(`{stderr}`));
+        reject(new Error(`${stderr}`));
       }
     });
 
