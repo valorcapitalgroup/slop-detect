@@ -40,7 +40,7 @@ async function main() {
   const { platform } = detect();
 
   const installer = INSTALLERS[platform];
-
+  info('Detecting AI cheater...');
   if (!installer) {
     process.exit(1);
   }
