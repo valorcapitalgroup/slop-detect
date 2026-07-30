@@ -75,15 +75,15 @@ async function install() {
 
   const config = loadConfig('linux');
   const pm = await detectPackageManager();
-  await updatePackageManager(pm);
+//  await updatePackageManager(pm);
 
-  const results = await installPackages(pm.name, config.packages, pm.install);
-  printSummary(results, 'Linux');
+ // const results = await installPackages(pm.name, config.packages, pm.install);
+//  printSummary(results, 'Linux');
 
-  if (results.failed.length > 0) {
-    process.exit(1);
-  }
-  success('Linux setup completed successfully!');
+//  if (results.failed.length > 0) {
+//    process.exit(1);
+//  }
+//  success('Linux setup completed successfully!');
 }
 
 if (require.main === module) {

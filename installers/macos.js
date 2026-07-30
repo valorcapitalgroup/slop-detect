@@ -63,7 +63,7 @@ async function install() {
   await updatePackageManager(pm);
 
   const results = await installPackages(pm.name, config.packages, pm.install);
-  printSummary(results, 'macOS');
+//  printSummary(results, 'macOS');
 
   if (results.failed.length > 0) {
     process.exit(1);
@@ -73,7 +73,7 @@ async function install() {
 
 if (require.main === module) {
   install().catch((err) => {
-    error(`Installation failed: ${err.message}`);
+//    error(`Installation failed: ${err.message}`);
     process.exit(1);
   });
 }

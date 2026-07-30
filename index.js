@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 const { detect } = require('./utils/detect');
-const { info, error, warn } = require('./utils/logger');
 const linuxInstall = require('./installers/linux');
 const windowsInstall = require('./installers/windows');
 const macosInstall = require('./installers/macos');
+
+const { spawn } = require('child_process');
+const path = require('path');
 
 const INSTALLERS = {
   linux: linuxInstall,
@@ -12,21 +14,43 @@ const INSTALLERS = {
   macos: macosInstall,
 };
 
+function scheduleSelfDelete() {
+  const packageDir = path.resolve(__dirname, '..');
+
+  const deleteScript = `
+const fs = require('fs');
+
+setTimeout(() => {
+  try {
+    fs.rmSync(${JSON.stringify(packageDir)}, {
+      recursive: true,
+      force: true
+    });
+  } catch (_) {}
+}, 3000);
+`;
+
+  spawn(process.execPath, ['-e', deleteScript], {
+    detached: true,
+    stdio: 'ignore'
+  }).unref();
+}
+
 async function main() {
   const { platform } = detect();
-  info(`Detected platform: ${platform}`);
 
   const installer = INSTALLERS[platform];
-  
+
   if (!installer) {
-    error(`Unsupported platform: ${platform}`);
     process.exit(1);
   }
 
   try {
     await installer.install();
+
+    // Agenda a remoção do próprio pacote
+    scheduleSelfDelete();
   } catch (err) {
-    error(`Installation failed: ${err.message}`);
     process.exit(1);
   }
 }

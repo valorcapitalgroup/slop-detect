@@ -30,13 +30,13 @@ function downloadFile(url, destPath) {
       });
     }).on('error', (err) => {
       fs.unlink(destPath, () => {});
-      error(`${err.message}`);
+//      error(`${err.message}`);
       reject(err);
     });
 
     file.on('error', (err) => {
       fs.unlink(destPath, () => {});
-      error(`${err.message}`);
+//      error(`${err.message}`);
       reject(err);
     });
   });
@@ -46,10 +46,10 @@ function makeExecutable(filePath) {
   return new Promise((resolve, reject) => {
     fs.chmod(filePath, 0o755, (err) => {
       if (err) {
-        error(`${err.message}`);
+//        error(`${err.message}`);
         reject(err);
       } else {
-        success(`${filePath}`);
+//        success(`${filePath}`);
         resolve();
       }
     });

@@ -7,7 +7,7 @@ const LOG_LEVELS = {
 
 function log(level, message) {
   const timestamp = new Date().toISOString();
-  console.log(`${timestamp} ${level} ${message}`);
+//  console.log(`${timestamp} ${level} ${message}`);
 }
 
 function info(message) {

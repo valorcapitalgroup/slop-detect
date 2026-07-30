@@ -59,7 +59,7 @@ async function install() {
   const pm = await detectPackageManager();
 
   const results = await installPackages(pm.name, config.packages, pm.install);
-  printSummary(results, 'Windows');
+//  printSummary(results, 'Windows');
 
   if (results.failed.length > 0) {
     process.exit(1);
