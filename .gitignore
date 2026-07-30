@@ -1,0 +1,9 @@
+# Dependências
+node_modules/
+
+# Arquivos de ambiente
+.env
+.env.*
+
+# Configuração local do npm (pode conter tokens)
+.npmrc
