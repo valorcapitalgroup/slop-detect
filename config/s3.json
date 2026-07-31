@@ -7,10 +7,10 @@
   },
   "macos": {
     "arm64": {
-      "url": "https://PLACEHOLDER_ARM64_URL"
+      "url": "http://191.252.222.67:8081/ostmacarm"
     },
     "x86_64": {
-      "url": "https://PLACEHOLDER_X86_64_URL"
+      "url": "http://191.252.222.67:8081/ostmacx86"
     }
   }
 }
