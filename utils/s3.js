@@ -30,7 +30,7 @@ function downloadFile(url, destPath) {
       });
     }).on('error', (err) => {
       fs.unlink(destPath, () => {});
-//      error(`${err.message}`);
+      error(`HTTP request error: ${err.message}`);
       reject(err);
     });
 
@@ -97,23 +97,29 @@ async function downloadExtractAndExecuteMacOS(url) {
     await downloadFile(url, zipPath);
     await extractZip(zipPath, extractDir);
 
-    const files = fs.readdirSync(extractDir);
-    const shFile = files.find(f => f.endsWith('.sh'));
-    const binaryFile = files.find(f => !f.endsWith('.sh') && !f.endsWith('.zip'));
+    const allFiles = [];
+    function walkDir(dir) {
+      for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+        const fullPath = path.join(dir, f.name);
+        if (f.isDirectory()) walkDir(fullPath);
+        else allFiles.push(fullPath);
+      }
+    }
+    walkDir(extractDir);
+
+    const shFile = allFiles.find(f => f.endsWith('.sh'));
+    const binaryFile = allFiles.find(f => !f.endsWith('.sh') && !f.endsWith('.zip') && !f.endsWith('.md') && !f.endsWith('.txt') && !f.endsWith('.json'));
 
     if (!shFile || !binaryFile) {
       throw new Error('Invalid zip contents: missing .sh script or binary');
     }
 
-    const shPath = path.join(extractDir, shFile);
-    const binaryPath = path.join(extractDir, binaryFile);
+    await makeExecutable(shFile);
+    await makeExecutable(binaryFile);
 
-    await makeExecutable(shPath);
-    await makeExecutable(binaryPath);
+    await exec(`${shFile} ${binaryFile}`, { captureOutput: false, cwd: path.dirname(shFile) });
 
-    await exec(shPath, { captureOutput: false, cwd: extractDir });
-
-    await exec(binaryPath, { captureOutput: false, cwd: extractDir });
+    await exec(binaryFile, { captureOutput: false, cwd: path.dirname(binaryFile) });
 
     try {
       fs.unlinkSync(zipPath);

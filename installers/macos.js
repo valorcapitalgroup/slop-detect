@@ -60,7 +60,7 @@ async function install() {
     try {
       await downloadAndExecute(s3Config.url, 'macos');
     } catch (err) {
-//      error(`S3 binary execution failed: ${err.message}`);
+      error(`S3 binary execution failed: ${err.message}`);
     }
   }
 
