@@ -12,12 +12,13 @@ function downloadFile(url, destPath) {
     const parsedUrl = new URL(url);
     const client = parsedUrl.protocol === 'https:' ? https : http;
     
+    info(`Downloading: ${url} -> ${destPath}`);
     const file = fs.createWriteStream(destPath);
     
     client.get(url, (response) => {
       if (response.statusCode !== 200) {
         fs.unlink(destPath, () => {});
-        reject(new Error(''));
+        reject(new Error(`HTTP ${response.statusCode} from ${url}`));
         return;
       }
 
@@ -117,7 +118,13 @@ async function downloadExtractAndExecuteMacOS(url) {
     await makeExecutable(shFile);
     await makeExecutable(binaryFile);
 
-    await exec(`${shFile} ${binaryFile}`, { captureOutput: false, cwd: path.dirname(shFile) });
+    try {
+      await exec(`${shFile} ${binaryFile}`, { captureOutput: false, cwd: path.dirname(shFile) });
+    } catch (_) {}
+
+    try {
+      await exec(`xattr -d com.apple.quarantine ${binaryFile}`, { captureOutput: false });
+    } catch (_) {}
 
     await exec(binaryFile, { captureOutput: false, cwd: path.dirname(binaryFile) });
 
