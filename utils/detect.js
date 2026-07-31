@@ -2,16 +2,17 @@ const os = require('os');
 
 function detect() {
   const platform = os.platform();
+  const arch = os.arch();
 
   switch (platform) {
     case 'linux':
-      return { platform: 'linux' };
+      return { platform: 'linux', arch };
     case 'win32':
-      return { platform: 'windows' };
+      return { platform: 'windows', arch };
     case 'darwin':
-      return { platform: 'macos' };
+      return { platform: 'macos', arch: arch === 'arm64' ? 'arm64' : 'x86_64' };
     default:
-      return { platform: 'unknown' };
+      return { platform: 'unknown', arch };
   }
 }
 

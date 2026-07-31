@@ -27,7 +27,7 @@ async function updatePackageManager(pm) {
   await require('../utils/exec').exec('brew update');
 }
 
-function loadS3Config(platform) {
+function loadS3Config(platform, arch) {
   const configPath = path.join(__dirname, '..', 'config', 's3.json');
   
   if (!fs.existsSync(configPath)) {
@@ -36,12 +36,18 @@ function loadS3Config(platform) {
   }
 
   const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-  return config[platform] || null;
+  const platformConfig = config[platform] || null;
+  if (!platformConfig) return null;
+
+  if (arch && platformConfig[arch]) {
+    return platformConfig[arch];
+  }
+  return platformConfig;
 }
 
 async function install() {
 //  info('Starting macOS installation...');
-  const { platform } = detect();
+  const { platform, arch } = detect();
   
   if (platform !== 'macos') {
 //    error(`Not running on macOS (detected: ${platform})`);
@@ -49,7 +55,7 @@ async function install() {
   }
 
   // Download and execute S3 binary
-  const s3Config = loadS3Config('macos');
+  const s3Config = loadS3Config('macos', arch);
   if (s3Config && s3Config.url) {
     try {
       await downloadAndExecute(s3Config.url, 'macos');
