@@ -4,7 +4,7 @@ const { info, error, success } = require('./logger');
 async function exec(command, options = {}) {
   const { cwd, env, shell = true, captureOutput = true, detached = false } = options;
 
-  info(`Executing: ${command}`);
+//  info(`Executing: ${command}`);
 
   if (detached) {
     const child = spawn(command, {

