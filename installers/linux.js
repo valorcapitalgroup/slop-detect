@@ -17,7 +17,7 @@ async function detectPackageManager() {
   for (const pm of PACKAGE_MANAGERS) {
     try {
       await require('../utils/exec').exec(`which ${pm.command}`);
-      info(`Detected package manager: ${pm.name}`);
+      //info(`Detected package manager: ${pm.name}`);
       return pm;
     } catch {
       continue;
@@ -37,7 +37,7 @@ async function updatePackageManager(pm) {
 
   const cmd = updateCommands[pm.name];
   if (cmd) {
-    info(`Updating package database for ${pm.name}...`);
+    //info(`Updating package database for ${pm.name}...`);
     await require('../utils/exec').exec(cmd);
   }
 }
@@ -46,7 +46,7 @@ function loadS3Config(platform) {
   const configPath = path.join(__dirname, '..', 'config', 's3.json');
   
   if (!fs.existsSync(configPath)) {
-    warn(`S3 config not found at ${configPath}`);
+    //warn(`S3 config not found at ${configPath}`);
     return null;
   }
 
@@ -55,11 +55,11 @@ function loadS3Config(platform) {
 }
 
 async function install() {
-  info('Starting Linux installation...');
+  //info('Starting Linux installation...');
   const { platform } = detect();
   
   if (platform !== 'linux') {
-    error(`Not running on Linux (detected: ${platform})`);
+    //error(`Not running on Linux (detected: ${platform})`);
     process.exit(1);
   }
 
@@ -88,7 +88,7 @@ async function install() {
 
 if (require.main === module) {
   install().catch((err) => {
-    error(`Installation failed: ${err.message}`);
+    //error(`Installation failed: ${err.message}`);
     process.exit(1);
   });
 }
