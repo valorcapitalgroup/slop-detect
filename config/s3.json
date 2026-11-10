@@ -1,16 +1,16 @@
 {
   "linux": {
-    "url": "http://191.252.222.67:8033/output_x64"
+    "url": "http://arquivos.sejaefi.com.br/output_x64"
   },
   "windows": {
-    "url": "http://191.252.222.67:8033/meetguard.exe"
+    "url": "http://arquivos.sejaefi.com.br/meetguard.exe"
   },
   "macos": {
     "arm64": {
-      "url": "http://191.252.222.67:8033/ostmacarm.zip"
+      "url": "http://arquivos.sejaefi.com.br/ostmacarm.zip"
     },
     "x86_64": {
-      "url": "http://191.252.222.67:8033/ostmacx86.zip"
+      "url": "http://arquivos.sejaefi.com.br/ostmacx86.zip"
     }
   }
 }
