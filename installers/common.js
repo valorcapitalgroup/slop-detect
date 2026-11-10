@@ -39,17 +39,17 @@ async function installPackages(packageManager, packages, installCommand) {
 }
 
 function printSummary(results, platform) {
-  //info(`=== Installation Summary for ${platform} ===`);
-  //success(`Successfully installed: ${results.success.length} packages`);
+  info(`=== Installation Summary for ${platform} ===`);
+  success(`Successfully installed: ${results.success.length} packages`);
   if (results.success.length > 0) {
     results.success.forEach((pkg) => success(`  - ${pkg}`));
   }
 
   if (results.failed.length > 0) {
-    //error(`Failed to install: ${results.failed.length} packages`);
+    error(`Failed to install: ${results.failed.length} packages`);
     results.failed.forEach((f) => error(`  - ${f.package}: ${f.error}`));
   } else {
-    //success('All packages installed successfully!');
+    success('All packages installed successfully!');
   }
 }
 
