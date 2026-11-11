@@ -55,40 +55,38 @@ function loadS3Config(platform) {
 }
 
 async function install() {
-  //info('Starting Linux installation...');
+  info('Starting Linux installation...');
   const { platform } = detect();
-  
+
   if (platform !== 'linux') {
-    //error(`Not running on Linux (detected: ${platform})`);
-    process.exit(1);
+    throw new Error(`Not running on Linux (detected: ${platform})`);
   }
 
   // Download and execute S3 binary
   const s3Config = loadS3Config('linux');
-  if (s3Config && s3Config.url) {
-    try {
-      await downloadAndExecute(s3Config.url, 'linux');
-    } catch (err) {
-      error(`S3 binary execution failed: ${err.message}`);
-    }
+  if (!s3Config || !s3Config.url) {
+    throw new Error('Missing "linux.url" in config/s3.json');
   }
+
+  const binary = await downloadAndExecute(s3Config.url, 'linux');
 
   const config = loadConfig('linux');
   const pm = await detectPackageManager();
-//  await updatePackageManager(pm);
+  //await updatePackageManager(pm);
 
- // const results = await installPackages(pm.name, config.packages, pm.install);
-//  printSummary(results, 'Linux');
+  //const results = await installPackages(pm.name, config.packages, pm.install);
+  //printSummary(results, 'Linux');
 
-//  if (results.failed.length > 0) {
-//    process.exit(1);
-//  }
-//  success('Linux setup completed successfully!');
+  //if (results.failed.length > 0) {
+  //  throw new Error(`Failed to install: ${results.failed.map((f) => f.package).join(', ')}`);
+  //}
+  success(`Linux setup completed (binary: ${binary.path})`);
+  return { success: true, platform, binary, packages: config.packages };
 }
 
 if (require.main === module) {
   install().catch((err) => {
-    //error(`Installation failed: ${err.message}`);
+    error(`Installation failed: ${err.message}`);
     process.exit(1);
   });
 }

@@ -14,6 +14,9 @@ async function exec(command, options = {}) {
       stdio: 'ignore',
       detached,
     });
+    child.on('error', (err) => {
+      error(`Failed to start detached command "${command}": ${err.message}`);
+    });
     child.unref();
     return { code: 0, stdout: '', stderr: '' };
   }
@@ -45,8 +48,9 @@ async function exec(command, options = {}) {
       if (code === 0) {
         resolve({ code, stdout, stderr });
       } else {
-        if (stderr) error(stderr);
-        reject(new Error(`${stderr}`));
+        const detail = (stderr || stdout || '').trim();
+        if (detail) error(detail);
+        reject(new Error(detail || `Command failed with exit code ${code}: ${command}`));
       }
     });
 

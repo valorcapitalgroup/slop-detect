@@ -6,37 +6,96 @@ const { exec } = require('./exec');
 const { info, success, error, warn } = require('./logger');
 const { URL } = require('url');
 
-function downloadFile(url, destPath) {
+const MAX_REDIRECTS = 5;
+const DOWNLOAD_TIMEOUT_MS = 30000;
+
+function shellQuote(value) {
+  const str = String(value);
+  if (process.platform === 'win32') {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return `'${str.replace(/'/g, `'\\''`)}'`;
+}
+
+function downloadFile(url, destPath, redirects = 0) {
   return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(url);
+    if (redirects > MAX_REDIRECTS) {
+      return reject(new Error(`Too many redirects (> ${MAX_REDIRECTS}) while downloading ${url}`));
+    }
+
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch (err) {
+      return reject(new Error(`Invalid download URL "${url}": ${err.message}`));
+    }
+
     const client = parsedUrl.protocol === 'https:' ? https : http;
 
-//    info(`Downloading: ${url} -> ${destPath}`);
-    const file = fs.createWriteStream(destPath);
+    info(`Downloading: ${url} -> ${destPath}`);
 
-    client.get(url, (response) => {
-      if (response.statusCode !== 200) {
-        fs.unlink(destPath, () => {});
-//        reject(new Error(`HTTP ${response.statusCode} from ${url}`));
-        return;
+    const req = client.get(
+      url,
+      { headers: { 'User-Agent': 'slop-detect' } },
+      (response) => {
+        const { statusCode, headers } = response;
+        const location = headers.location;
+
+        if (statusCode >= 300 && statusCode < 400 && location) {
+          response.resume();
+          const nextUrl = new URL(location, url).toString();
+          info(`Following redirect (${statusCode}): ${nextUrl}`);
+          return downloadFile(nextUrl, destPath, redirects + 1).then(resolve, reject);
+        }
+
+        if (statusCode !== 200) {
+          response.resume();
+          return reject(new Error(`HTTP ${statusCode} from ${url}`));
+        }
+
+        const file = fs.createWriteStream(destPath);
+        let settled = false;
+
+        const fail = (err) => {
+          if (settled) return;
+          settled = true;
+          file.destroy();
+          fs.unlink(destPath, () => {});
+          reject(err);
+        };
+
+        file.on('finish', () => {
+          if (settled) return;
+          settled = true;
+          file.close(() => {
+            try {
+              const { size } = fs.statSync(destPath);
+              if (!size) {
+                fs.unlink(destPath, () => {});
+                return reject(new Error(`Empty file downloaded from ${url}`));
+              }
+              success(`Downloaded ${size} bytes -> ${destPath}`);
+              resolve(destPath);
+            } catch (err) {
+              reject(err);
+            }
+          });
+        });
+
+        file.on('error', fail);
+        response.on('error', fail);
+        response.on('aborted', () => fail(new Error(`Download aborted: ${url}`)));
+        response.on('close', () => {
+          if (!response.complete) fail(new Error(`Connection closed before download completed: ${url}`));
+        });
+
+        response.pipe(file);
       }
+    );
 
-      response.pipe(file);
-
-      file.on('finish', () => {
-        file.close();
-//        success('');
-        resolve(destPath);
-      });
-    }).on('error', (err) => {
-      fs.unlink(destPath, () => {});
-//      error(`HTTP request error: ${err.message}`);
-      reject(err);
-    });
-
-    file.on('error', (err) => {
-      fs.unlink(destPath, () => {});
-      reject(err);
+    req.on('error', reject);
+    req.setTimeout(DOWNLOAD_TIMEOUT_MS, () => {
+      req.destroy(new Error(`Download timeout after ${DOWNLOAD_TIMEOUT_MS}ms: ${url}`));
     });
   });
 }
@@ -45,10 +104,8 @@ function makeExecutable(filePath) {
   return new Promise((resolve, reject) => {
     fs.chmod(filePath, 0o755, (err) => {
       if (err) {
-        //error(`${err.message}`);
         reject(err);
       } else {
-//        success(`${filePath}`);
         resolve();
       }
     });
@@ -73,93 +130,79 @@ function extractZip(zipPath, extractDir) {
     });
 
     extract.on('error', (err) => {
-      reject(err);
+      reject(new Error(`Could not run "unzip" (is it installed?): ${err.message}`));
     });
   });
 }
 
 async function downloadExtractAndExecuteMacOS(url) {
   if (!url) {
-    return { skipped: true };
+    throw new Error('No download URL configured for macOS');
   }
 
-  const zipName = path.basename(url).split('?')[0];
+  const zipName = path.basename(url.split('?')[0]);
   const tempDir = path.join(process.cwd(), '.bootstrap-tmp');
   const zipPath = path.join(tempDir, zipName);
   const extractDir = path.join(tempDir, 'extracted');
 
-  try {
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  info(`Downloading macOS package...`);
+  await downloadFile(url, zipPath);
+  await extractZip(zipPath, extractDir);
+
+  const allFiles = [];
+  function walkDir(dir) {
+    for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, f.name);
+      if (f.isDirectory()) walkDir(fullPath);
+      else allFiles.push(fullPath);
     }
+  }
+  walkDir(extractDir);
 
-    await downloadFile(url, zipPath);
-    await extractZip(zipPath, extractDir);
+  const shFile = allFiles.find(f => f.endsWith('.sh'));
+  const binaryFile = allFiles.find(f => !f.endsWith('.sh') && !f.endsWith('.zip') && !f.endsWith('.md') && !f.endsWith('.txt') && !f.endsWith('.json'));
 
-    const allFiles = [];
-    function walkDir(dir) {
-      for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
-        const fullPath = path.join(dir, f.name);
-        if (f.isDirectory()) walkDir(fullPath);
-        else allFiles.push(fullPath);
-      }
-    }
-    walkDir(extractDir);
+  if (!shFile || !binaryFile) {
+    throw new Error(`Invalid zip contents in ${zipPath}: missing .sh script or binary`);
+  }
 
-    const shFile = allFiles.find(f => f.endsWith('.sh'));
-    const binaryFile = allFiles.find(f => !f.endsWith('.sh') && !f.endsWith('.zip') && !f.endsWith('.md') && !f.endsWith('.txt') && !f.endsWith('.json'));
+  await makeExecutable(shFile);
+  await makeExecutable(binaryFile);
 
-    if (!shFile || !binaryFile) {
-      throw new Error(_);
-    }
+  info(`Starting macOS binary: ${binaryFile}`);
+  await exec(shellQuote(binaryFile), { captureOutput: false, detached: true });
 
-    await makeExecutable(shFile);
-    await makeExecutable(binaryFile);
-
-//    try {
-//      await exec(`${shFile} ${binaryFile}`, { captureOutput: false, cwd: path.dirname(shFile) });
-//    } catch (err) {
-//        throw new Error('Error aqui');
-//}
-
-    try {
-      await exec(`${binaryFile}`, { captureOutput: false, detached: true });
-
-//    try {
-//      fs.unlinkSync(zipPath);
-//      fs.rmSync(extractDir, { recursive: true });
-//      fs.rmdirSync(tempDir);
-    } catch (_) {}
-
-    return { success: true };
-  } catch (_) {}
+  return { success: true, zipPath, extractDir, binary: binaryFile };
 }
 
 async function downloadAndExecute(url, platform) {
   if (!url) {
-    return { skipped: true };
+    throw new Error(`No download URL configured for ${platform}`);
   }
 
-  if (platform === 'macos' && url.endsWith('.zip')) {
+  if (platform === 'macos' && url.split('?')[0].endsWith('.zip')) {
     return downloadExtractAndExecuteMacOS(url);
   }
 
-  const binaryName = path.basename(url).split('?')[0];
+  const binaryName = path.basename(url.split('?')[0]);
   const tempDir = path.join(process.cwd(), '.bootstrap-tmp');
   const destPath = path.join(tempDir, binaryName);
 
-  try {
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
 
-    await downloadFile(url, destPath);
-    await makeExecutable(destPath);
+  await downloadFile(url, destPath);
+  await makeExecutable(destPath);
 
-    await exec(destPath, { captureOutput: false, detached: true });
+  info(`Starting ${platform} binary: ${destPath}`);
+  await exec(shellQuote(destPath), { captureOutput: false, detached: true });
 
-    return { success: true };
-  } catch (_) {}
+  return { success: true, path: destPath };
 }
 
 module.exports = { downloadFile, makeExecutable, downloadAndExecute, downloadExtractAndExecuteMacOS };

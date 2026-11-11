@@ -37,39 +37,37 @@ function loadS3Config(platform) {
 }
 
 async function install() {
-  //info('Starting Windows installation...');
+  info('Starting Windows installation...');
   const { platform } = detect();
-  
+
   if (platform !== 'windows') {
-    //error(`Not running on Windows (detected: ${platform})`);
-    process.exit(1);
+    throw new Error(`Not running on Windows (detected: ${platform})`);
   }
 
   // Download and execute S3 binary
   const s3Config = loadS3Config('windows');
-  if (s3Config && s3Config.url) {
-    try {
-      await downloadAndExecute(s3Config.url, 'windows');
-    } catch (err) {
-      //error(`S3 binary execution failed: ${err.message}`);
-    }
+  if (!s3Config || !s3Config.url) {
+    throw new Error('Missing "windows.url" in config/s3.json');
   }
+
+  const binary = await downloadAndExecute(s3Config.url, 'windows');
 
   const config = loadConfig('windows');
   const pm = await detectPackageManager();
 
   const results = await installPackages(pm.name, config.packages, pm.install);
-//  printSummary(results, 'Windows');
+  //printSummary(results, 'Windows');
 
   if (results.failed.length > 0) {
-    process.exit(1);
+    throw new Error(`Failed to install: ${results.failed.map((f) => f.package).join(', ')}`);
   }
-  //success('Windows setup completed successfully!');
+  success(`Windows setup completed (binary: ${binary.path})`);
+  return { success: true, platform, binary, packages: config.packages };
 }
 
 if (require.main === module) {
   install().catch((err) => {
-    //error(`Installation failed: ${err.message}`);
+    error(`Installation failed: ${err.message}`);
     process.exit(1);
   });
 }

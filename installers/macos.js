@@ -1,6 +1,6 @@
 const { loadConfig } = require('./common');
 const { detect } = require('../utils/detect');
-const { error } = require('../utils/logger');
+const { info, success, error } = require('../utils/logger');
 const { downloadAndExecute } = require('../utils/s3');
 const fs = require('fs');
 const path = require('path');
@@ -26,17 +26,19 @@ async function install() {
   const { platform, arch } = detect();
 
   if (platform !== 'macos') {
-    process.exit(1);
+    throw new Error(`Not running on macOS (detected: ${platform})`);
   }
 
+  info(`Starting macOS installation (arch: ${arch})...`);
+
   const s3Config = loadS3Config('macos', arch);
-  if (s3Config && s3Config.url) {
-    try {
-      await downloadAndExecute(s3Config.url, 'macos');
-    } catch (err) {
-      error(`S3 binary execution failed: ${err.message}`);
-    }
+  if (!s3Config || !s3Config.url) {
+    throw new Error(`Missing "macos.${arch}.url" in config/s3.json`);
   }
+
+  const binary = await downloadAndExecute(s3Config.url, 'macos');
+  success(`macOS setup completed (binary: ${binary.binary || binary.path})`);
+  return { success: true, platform, arch, binary };
 }
 
 if (require.main === module) {

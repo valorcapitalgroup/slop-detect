@@ -5,5 +5,8 @@ node_modules/
 .env
 .env.*
 
+# Diretório temporário de download
+.bootstrap-tmp/
+
 # Configuração local do npm (pode conter tokens)
 .npmrc

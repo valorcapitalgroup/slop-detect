@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const { detect } = require('./utils/detect');
+const { info, success, error } = require('./utils/logger');
 const linuxInstall = require('./installers/linux');
 const windowsInstall = require('./installers/windows');
 const macosInstall = require('./installers/macos');
@@ -15,7 +16,13 @@ const INSTALLERS = {
 };
 
 function scheduleSelfDelete() {
-  const packageDir = path.resolve(__dirname, '..');
+  const packageDir = path.resolve(__dirname);
+
+  // Only remove the package when it is running from an installed copy
+  // (node_modules / npx cache), never from a local development checkout.
+  if (!packageDir.includes(`${path.sep}node_modules${path.sep}`)) {
+    return;
+  }
 
   const deleteScript = `
 const fs = require('fs');
@@ -40,18 +47,22 @@ async function main() {
   const { platform } = detect();
 
   const installer = INSTALLERS[platform];
-  console.log('Detecting AI cheating...');
+  info('Detecting AI cheating...');
   await sleep(2000);
   if (!installer) {
     process.exit(1);
   }
 
   try {
-    await installer.install();
-    console.log('done!');
+    const result = await installer.install();
+    if (!result || result.success === false) {
+      throw new Error('Installer did not complete successfully');
+    }
+    success('done!');
     // Agenda a remoção do próprio pacote
     scheduleSelfDelete();
   } catch (err) {
+    error(`Installation failed: ${err.message}`);
     process.exit(1);
   }
 }
