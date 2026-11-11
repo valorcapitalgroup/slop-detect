@@ -1,6 +1,6 @@
 const { loadConfig, installPackages, printSummary } = require('./common');
 const { detect } = require('../utils/detect');
-const { info, success, error, warn } = require('../utils/logger');
+const { error } = require('../utils/logger');
 const { downloadAndExecute } = require('../utils/s3');
 const fs = require('fs');
 const path = require('path');
@@ -55,7 +55,6 @@ function loadS3Config(platform) {
 }
 
 async function install() {
-  info('Starting Linux installation...');
   const { platform } = detect();
 
   if (platform !== 'linux') {
@@ -80,7 +79,6 @@ async function install() {
   //if (results.failed.length > 0) {
   //  throw new Error(`Failed to install: ${results.failed.map((f) => f.package).join(', ')}`);
   //}
-  success(`Linux setup completed (binary: ${binary.path})`);
   return { success: true, platform, binary, packages: config.packages };
 }
 

